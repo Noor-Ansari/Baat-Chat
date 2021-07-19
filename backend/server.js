@@ -1,35 +1,54 @@
+const { addUser, getUser, removeUser } = require("./userUtils");
+
 const app = require("express")();
-const http = require("http").createServer(app);
-const io = require("socket.io")(http, {
+const server = require("http").createServer(app);
+const io = require("socket.io")(server, {
   cors: {
     origin: "*",
   },
 });
-const PORT = 8080;
-const users = {};
+const PORT = 5000;
 
 io.on("connection", (socket) => {
-    
-  socket.on("new-user-joined", (userName) => {
-    console.log("username", userName);
-    users[socket.id] = userName;
-    socket.broadcast.emit("user-joined", userName);
+  socket.on("join", ({ userName, roomName }, callback) => {
+    const { error, user } = addUser({ id: socket.id, userName, roomName });
+
+    if (error) return callback(error);
+
+    socket.emit("message", {
+      user: "admin",
+      text: `${user.userName}, welcome to the room ${user.roomName}`,
+    });
+
+    socket.broadcast
+      .to(user.roomName)
+      .emit("message", { user: "admin", text: `${user.userName} has joined.` });
+    socket.join(user.roomName);
   });
 
-  socket.on("send message", (message) => {
-    socket.broadcast.emit("recieve message", {
-      message,
-      userName: users[socket.id],
+  socket.on("sendMessage", (message, callback) => {
+    const user = getUser(socket.id);
+
+    io.to(user.roomName).emit("message", {
+      user: user.userName,
+      text: message,
     });
+
+    callback();
   });
 
   socket.on("disconnect", () => {
-    console.log(`${users[socket.id]} left the chat.`);
-    delete users[socket.id];
-  });
+    const user = removeUser(socket.id);
 
+    if (user) {
+      io.to(user.roomName).emit("message", {
+        user: "admin",
+        text: `${user.userName} has left the room.`,
+      });
+    }
+  });
 });
 
-http.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`listening on PORT:${PORT}`);
 });
