@@ -1,31 +1,46 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useHistory } from "react-router-dom";
 import styled from "styled-components";
 
 function JoinPage() {
   const [userName, setUserName] = useState("");
-  const [room, setRoom] = useState("");
+  const [roomName, setRoomName] = useState("");
+  const [isValidated, setIsValidated] = useState(true);
+  const history = useHistory();
 
-  const handleSubmit = (e) => {
-    if (!userName || !room) {
-      e.preventDefault();
-    }
+  const submitForm = (e) => {
+    e.preventDefault();
+    history.push(`/chat-page/?userName=${userName}&roomName=${roomName}`);
   };
+
+  useEffect(() => {
+    if (userName && roomName) {
+      setIsValidated(false);
+    }
+  }, [userName, roomName]);
 
   return (
     <MainContainer>
       <PageTitle>Welcome to Baat-Chat</PageTitle>
       <FormContainer>
-        <form>
+        <form onSubmit={submitForm}>
           <FormItem>
             <InputLabel>UserName :</InputLabel>
-            <InputControl />
+            <InputControl
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+            />
           </FormItem>
           <FormItem>
             <InputLabel>RoomName :</InputLabel>
-            <InputControl />
+            <InputControl
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+            />
           </FormItem>
-          <SubmitButton>Send</SubmitButton>
+          <SubmitButton type="submit" disabled={isValidated}>
+            Send
+          </SubmitButton>
         </form>
       </FormContainer>
     </MainContainer>
