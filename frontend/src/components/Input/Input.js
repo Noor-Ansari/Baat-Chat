@@ -7,6 +7,7 @@ function Input({ message, setMessage, sendMessages }) {
     <form onSubmit={sendMessages}>
       <InputContainer>
         <InputControl
+        placeholder="Type something..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />

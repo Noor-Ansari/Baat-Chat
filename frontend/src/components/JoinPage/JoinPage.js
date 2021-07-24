@@ -56,6 +56,7 @@ const MainContainer = styled.div`
   justify-content: center;
   min-height: 100vh;
   width: 100vw;
+  font-family: monospace;
 `;
 
 const PageTitle = styled.h1`

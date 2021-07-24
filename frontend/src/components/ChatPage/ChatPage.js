@@ -4,22 +4,23 @@ import io from "socket.io-client";
 import styled from "styled-components";
 import InfoBar from "../InfoBar/InfoBar";
 import Input from "../Input/Input";
+import Messages from "../Messages/Messages";
 
 let socket;
+const ENDPOINT = "localhost:5000";
 
 function ChatPage({ location }) {
   const [userName, setUserName] = useState("");
   const [roomName, setRoomName] = useState("");
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
-  const ENDPOINT = "localhost:5000";
-  console.log(roomName);
+
   useEffect(() => {
     const { userName, roomName } = qs.parse(location.search, {
       ignoreQueryPrefix: true,
     });
-    setUserName(userName);
-    setRoomName(roomName);
+    setUserName(userName.toLowerCase());
+    setRoomName(roomName.toLowerCase());
 
     socket = io(ENDPOINT);
     socket.emit("join", { userName, roomName });
@@ -28,17 +29,18 @@ function ChatPage({ location }) {
       socket.close();
       socket.off();
     };
-  }, [ENDPOINT, location.search]);
+  }, [location.search]);
 
   useEffect(() => {
     socket.on("message", (message) => {
       setMessages([...messages, message]);
     });
+    const chatArea = document.getElementById("chat-area");
+    chatArea.scrollTop = chatArea.scrollHeight;
   }, [messages]);
 
   const sendMessage = (e) => {
     e.preventDefault();
-    console.log("submitted");
     if (message) {
       socket.emit("sendMessage", message, () => {
         setMessage("");
@@ -46,12 +48,13 @@ function ChatPage({ location }) {
     }
   };
 
-  console.log(messages, message);
   return (
     <>
       <MainContainer>
-        <InfoBar roomName={roomName} />
-        <ChatContainer></ChatContainer>
+        <InfoBar roomName={roomName} userName={userName} />
+        <ChatContainer id="chat-area">
+          <Messages messages={messages} name={userName} />
+        </ChatContainer>
         <Input
           message={message}
           setMessage={setMessage}
@@ -67,9 +70,13 @@ export default ChatPage;
 const MainContainer = styled.div`
   height: 100vh;
   display: grid;
-  grid-template-rows: 0.1fr auto 0.1fr;
+  grid-template-rows: 4rem auto 3rem;
 `;
 
 const ChatContainer = styled.div`
   background-color: #f2f2f2;
+  overflow-y: auto;
+  ::-webkit-scrollbar {
+    display: none;
+  }
 `;
